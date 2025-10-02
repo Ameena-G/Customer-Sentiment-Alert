@@ -67,10 +67,3 @@ Visit the dashboard to see:
 3. Alert panel with critical mentions
 4. AI-generated response suggestions
 
-## 🤝 Contributing
-
-This is a hackathon project. Feel free to fork and improve!
-
-## 📄 License
-
-MIT License - see LICENSE file for details
