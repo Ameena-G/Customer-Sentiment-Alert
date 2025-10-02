@@ -52,6 +52,5 @@ Thumbs.db
 # Local startup/utility scripts
 *.bat
 
-# Datasets (if any local test data)
-*.csv
-*.json
+# Documentation
+*.md
