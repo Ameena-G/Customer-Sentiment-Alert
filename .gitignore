@@ -21,13 +21,15 @@ yarn-debug.log*
 yarn-error.log*
 dist/
 .vite/
+package-lock.json
+yarn.lock
 
 # Environment
 .env
 .env.local
 .env.*.local
 
-# IDE
+# IDE / Editor
 .vscode/
 .idea/
 *.swp
@@ -46,3 +48,10 @@ sentiguard.db
 # OS
 Thumbs.db
 .DS_Store
+
+# Local startup/utility scripts
+*.bat
+
+# Datasets (if any local test data)
+*.csv
+*.json
