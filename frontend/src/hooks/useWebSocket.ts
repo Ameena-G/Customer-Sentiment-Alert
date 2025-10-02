@@ -1,5 +1,4 @@
 import { useEffect, useState, useCallback } from 'react'
-import { io, Socket } from 'socket.io-client'
 
 interface WebSocketMessage {
   type: string
@@ -7,50 +6,69 @@ interface WebSocketMessage {
 }
 
 export function useWebSocket(url: string) {
-  const [socket, setSocket] = useState<Socket | null>(null)
+  const [socket, setSocket] = useState<WebSocket | null>(null)
   const [isConnected, setIsConnected] = useState(false)
   const [lastMessage, setLastMessage] = useState<WebSocketMessage | null>(null)
 
   useEffect(() => {
-    const newSocket = io(url, {
-      transports: ['websocket'],
-      reconnection: true,
-      reconnectionDelay: 1000,
-      reconnectionAttempts: 10,
-    })
+    let ws: WebSocket | null = null
+    let reconnectTimeout: NodeJS.Timeout | null = null
 
-    newSocket.on('connect', () => {
-      console.log('WebSocket connected')
-      setIsConnected(true)
-    })
+    const connect = () => {
+      try {
+        ws = new WebSocket(url)
 
-    newSocket.on('disconnect', () => {
-      console.log('WebSocket disconnected')
-      setIsConnected(false)
-    })
+        ws.onopen = () => {
+          console.log('WebSocket connected')
+          setIsConnected(true)
+          setSocket(ws)
+        }
 
-    newSocket.on('message', (message: WebSocketMessage) => {
-      setLastMessage(message)
-    })
+        ws.onclose = () => {
+          console.log('WebSocket disconnected')
+          setIsConnected(false)
+          setSocket(null)
+          
+          // Auto-reconnect after 2 seconds
+          reconnectTimeout = setTimeout(() => {
+            console.log('Attempting to reconnect...')
+            connect()
+          }, 2000)
+        }
 
-    // Handle custom events
-    newSocket.onAny((event, data) => {
-      if (event !== 'connect' && event !== 'disconnect') {
-        setLastMessage({ type: event, data })
+        ws.onerror = (error) => {
+          console.error('WebSocket error:', error)
+        }
+
+        ws.onmessage = (event) => {
+          try {
+            const message = JSON.parse(event.data)
+            setLastMessage(message)
+          } catch (error) {
+            console.error('Failed to parse WebSocket message:', error)
+          }
+        }
+      } catch (error) {
+        console.error('Failed to create WebSocket:', error)
       }
-    })
+    }
 
-    setSocket(newSocket)
+    connect()
 
     return () => {
-      newSocket.close()
+      if (reconnectTimeout) {
+        clearTimeout(reconnectTimeout)
+      }
+      if (ws) {
+        ws.close()
+      }
     }
   }, [url])
 
   const sendMessage = useCallback(
     (message: any) => {
-      if (socket && isConnected) {
-        socket.emit('message', message)
+      if (socket && isConnected && socket.readyState === WebSocket.OPEN) {
+        socket.send(JSON.stringify(message))
       }
     },
     [socket, isConnected]

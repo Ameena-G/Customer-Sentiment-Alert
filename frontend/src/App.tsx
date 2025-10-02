@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
 import Dashboard from './components/Dashboard'
+import LandingPage from './components/LandingPage'
 import { useWebSocket } from './hooks/useWebSocket'
+import { useVoiceAlerts } from './hooks/useVoiceAlerts'
 import { api } from './lib/api'
 import { AlertCircle } from 'lucide-react'
 
@@ -40,13 +42,29 @@ export interface Stats {
 }
 
 function App() {
+  const [showLanding, setShowLanding] = useState(true)
   const [sentiments, setSentiments] = useState<SentimentRecord[]>([])
   const [alerts, setAlerts] = useState<Alert[]>([])
   const [stats, setStats] = useState<Stats | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [voiceEnabled, setVoiceEnabled] = useState(false)
 
   const { isConnected, lastMessage } = useWebSocket('ws://localhost:8000/ws')
+  const { announceAlert, testVoice } = useVoiceAlerts({ enabled: voiceEnabled })
+
+  const handleToggleVoice = () => {
+    const newState = !voiceEnabled
+    setVoiceEnabled(newState)
+    
+    if (newState) {
+      testVoice()
+    }
+  }
+
+  const handleEnterDashboard = () => {
+    setShowLanding(false)
+  }
 
   // Load initial data
   useEffect(() => {
@@ -82,9 +100,13 @@ function App() {
       // Refresh stats
       api.getStats(24).then(setStats)
     } else if (lastMessage.type === 'alert') {
-      setAlerts((prev) => [lastMessage.data, ...prev])
+      const newAlert = lastMessage.data
+      setAlerts((prev) => [newAlert, ...prev])
+      
+      // Announce alert via voice if enabled
+      announceAlert(newAlert.severity, newAlert.id)
     }
-  }, [lastMessage])
+  }, [lastMessage, announceAlert])
 
   const handleResolveAlert = async (alertId: number) => {
     try {
@@ -105,6 +127,11 @@ function App() {
     } catch (err) {
       console.error('Failed to trigger crisis:', err)
     }
+  }
+
+  // Show landing page first
+  if (showLanding) {
+    return <LandingPage onEnterDashboard={handleEnterDashboard} />
   }
 
   if (isLoading) {
@@ -144,6 +171,8 @@ function App() {
       alerts={alerts}
       stats={stats}
       isConnected={isConnected}
+      voiceEnabled={voiceEnabled}
+      onToggleVoice={handleToggleVoice}
       onResolveAlert={handleResolveAlert}
       onTriggerCrisis={handleTriggerCrisis}
     />

@@ -1,16 +1,20 @@
 import { useState } from 'react'
-import { Activity, AlertTriangle, TrendingUp, Zap } from 'lucide-react'
+import { Activity, AlertTriangle, TrendingUp, Zap, Download, Volume2, VolumeX } from 'lucide-react'
 import SentimentChart from './SentimentChart'
 import AlertPanel from './AlertPanel'
 import SourceMonitor from './SourceMonitor'
 import InsightsPanel from './InsightsPanel'
+import WordCloud from './WordCloud'
 import type { SentimentRecord, Alert, Stats } from '../App'
+import { exportAsJSON, exportAsCSV, exportSummaryReport } from '../lib/exportReport'
 
 interface DashboardProps {
   sentiments: SentimentRecord[]
   alerts: Alert[]
   stats: Stats | null
   isConnected: boolean
+  voiceEnabled: boolean
+  onToggleVoice: () => void
   onResolveAlert: (alertId: number) => void
   onTriggerCrisis: () => void
 }
@@ -20,10 +24,36 @@ export default function Dashboard({
   alerts,
   stats,
   isConnected,
+  voiceEnabled,
+  onToggleVoice,
   onResolveAlert,
   onTriggerCrisis,
 }: DashboardProps) {
   const [selectedSource, setSelectedSource] = useState<string | null>(null)
+  const [showExportMenu, setShowExportMenu] = useState(false)
+
+  const handleExport = (format: 'json' | 'csv' | 'summary') => {
+    const reportData = {
+      sentiments,
+      alerts,
+      stats,
+      generatedAt: new Date().toISOString()
+    }
+
+    switch (format) {
+      case 'json':
+        exportAsJSON(reportData)
+        break
+      case 'csv':
+        exportAsCSV(reportData)
+        break
+      case 'summary':
+        exportSummaryReport(reportData)
+        break
+    }
+
+    setShowExportMenu(false)
+  }
 
   const filteredSentiments = selectedSource
     ? sentiments.filter((s) => s.source === selectedSource)
@@ -59,6 +89,55 @@ export default function Dashboard({
                   {isConnected ? 'Live' : 'Disconnected'}
                 </span>
               </div>
+              
+              {/* Voice Alerts Toggle */}
+              <button
+                onClick={onToggleVoice}
+                className={`px-3 py-2 rounded-lg transition-colors text-sm font-medium flex items-center space-x-2 ${
+                  voiceEnabled 
+                    ? 'bg-green-100 text-green-700 hover:bg-green-200' 
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                }`}
+                title={voiceEnabled ? 'Voice alerts enabled' : 'Voice alerts disabled'}
+              >
+                {voiceEnabled ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
+                <span className="hidden sm:inline">Voice</span>
+              </button>
+
+              {/* Export Menu */}
+              <div className="relative">
+                <button
+                  onClick={() => setShowExportMenu(!showExportMenu)}
+                  className="px-3 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors text-sm font-medium flex items-center space-x-2"
+                >
+                  <Download className="h-4 w-4" />
+                  <span className="hidden sm:inline">Export</span>
+                </button>
+                
+                {showExportMenu && (
+                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-slate-200 py-1 z-10">
+                    <button
+                      onClick={() => handleExport('summary')}
+                      className="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-100"
+                    >
+                      📄 Summary Report (.txt)
+                    </button>
+                    <button
+                      onClick={() => handleExport('csv')}
+                      className="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-100"
+                    >
+                      📊 CSV Export
+                    </button>
+                    <button
+                      onClick={() => handleExport('json')}
+                      className="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-100"
+                    >
+                      💾 JSON Data
+                    </button>
+                  </div>
+                )}
+              </div>
+
               <button
                 onClick={onTriggerCrisis}
                 className="px-4 py-2 bg-destructive text-white rounded-lg hover:bg-destructive/90 transition-colors text-sm font-medium"
@@ -106,6 +185,7 @@ export default function Dashboard({
           {/* Left Column - Charts and Feed */}
           <div className="lg:col-span-2 space-y-6">
             <SentimentChart sentiments={sentiments} />
+            <WordCloud sentiments={sentiments} />
             <SourceMonitor
               sentiments={filteredSentiments}
               selectedSource={selectedSource}
