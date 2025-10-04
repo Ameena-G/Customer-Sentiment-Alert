@@ -4,6 +4,7 @@ from contextlib import asynccontextmanager
 import asyncio
 import json
 import logging
+import random
 from datetime import datetime, timedelta
 from typing import List, Dict
 from sqlalchemy.orm import Session
@@ -67,9 +68,18 @@ async def demo_data_task():
             # Save to database
             db = SessionLocal()
             try:
+                # Check if this source_id already exists to prevent duplicates
+                existing = db.query(SentimentRecord).filter(
+                    SentimentRecord.source_id == mention['source_id']
+                ).first()
+                
+                if existing:
+                    db.close()
+                    continue
+                
                 record = SentimentRecord(
                     source=mention['source'],
-                    source_id=f"{mention['source']}_{datetime.utcnow().timestamp()}",
+                    source_id=mention['source_id'],
                     text=mention['text'],
                     sentiment_score=sentiment['score'],
                     sentiment_label=sentiment['label'],

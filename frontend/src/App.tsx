@@ -1,6 +1,15 @@
 import { useState, useEffect } from 'react'
 import Dashboard from './components/Dashboard'
 import LandingPage from './components/LandingPage'
+import Sidebar from './components/Sidebar'
+import SearchPanel from './components/SearchPanel'
+import AnalyticsPanel from './components/AnalyticsPanel'
+import ReportsPanel from './components/ReportsPanel'
+import QueriesPanel from './components/QueriesPanel'
+import TrendsPanel from './components/TrendsPanel'
+import AlertSettingsPanel from './components/AlertSettingsPanel'
+import UsersPanel from './components/UsersPanel'
+import SettingsPanel from './components/SettingsPanel'
 import { useWebSocket } from './hooks/useWebSocket'
 import { useVoiceAlerts } from './hooks/useVoiceAlerts'
 import { api } from './lib/api'
@@ -43,6 +52,7 @@ export interface Stats {
 
 function App() {
   const [showLanding, setShowLanding] = useState(true)
+  const [activeTab, setActiveTab] = useState('dashboard')
   const [sentiments, setSentiments] = useState<SentimentRecord[]>([])
   const [alerts, setAlerts] = useState<Alert[]>([])
   const [stats, setStats] = useState<Stats | null>(null)
@@ -104,9 +114,11 @@ function App() {
       setAlerts((prev) => [newAlert, ...prev])
       
       // Announce alert via voice if enabled
-      announceAlert(newAlert.severity, newAlert.id)
+      if (voiceEnabled) {
+        announceAlert(newAlert.severity, newAlert.id)
+      }
     }
-  }, [lastMessage, announceAlert])
+  }, [lastMessage, voiceEnabled])
 
   const handleResolveAlert = async (alertId: number) => {
     try {
@@ -166,16 +178,74 @@ function App() {
   }
 
   return (
-    <Dashboard
-      sentiments={sentiments}
-      alerts={alerts}
-      stats={stats}
-      isConnected={isConnected}
-      voiceEnabled={voiceEnabled}
-      onToggleVoice={handleToggleVoice}
-      onResolveAlert={handleResolveAlert}
-      onTriggerCrisis={handleTriggerCrisis}
-    />
+    <div className="flex h-screen overflow-hidden">
+      {/* Sidebar */}
+      <Sidebar activeTab={activeTab} onTabChange={setActiveTab} />
+      
+      {/* Main Content */}
+      <div className="flex-1 overflow-auto">
+        {activeTab === 'dashboard' && (
+          <Dashboard
+            sentiments={sentiments}
+            alerts={alerts}
+            stats={stats}
+            isConnected={isConnected}
+            voiceEnabled={voiceEnabled}
+            onToggleVoice={handleToggleVoice}
+            onResolveAlert={handleResolveAlert}
+            onTriggerCrisis={handleTriggerCrisis}
+          />
+        )}
+        
+        {activeTab === 'search' && (
+          <div className="p-8">
+            <SearchPanel />
+          </div>
+        )}
+        
+        {activeTab === 'analytics' && (
+          <div className="p-8">
+            <AnalyticsPanel sentiments={sentiments} stats={stats} />
+          </div>
+        )}
+        
+        {activeTab === 'reports' && (
+          <div className="p-8">
+            <ReportsPanel />
+          </div>
+        )}
+        
+        {activeTab === 'queries' && (
+          <div className="p-8">
+            <QueriesPanel />
+          </div>
+        )}
+        
+        {activeTab === 'trends' && (
+          <div className="p-8">
+            <TrendsPanel />
+          </div>
+        )}
+        
+        {activeTab === 'alerts' && (
+          <div className="p-8">
+            <AlertSettingsPanel />
+          </div>
+        )}
+        
+        {activeTab === 'users' && (
+          <div className="p-8">
+            <UsersPanel />
+          </div>
+        )}
+        
+        {activeTab === 'settings' && (
+          <div className="p-8">
+            <SettingsPanel />
+          </div>
+        )}
+      </div>
+    </div>
   )
 }
 

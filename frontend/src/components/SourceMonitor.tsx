@@ -29,11 +29,14 @@ export default function SourceMonitor({
         <div className="flex items-center space-x-2">
           <Filter className="h-4 w-4 text-slate-400" />
           <select
-            value={selectedSource || ''}
-            onChange={(e) => onSourceChange(e.target.value || null)}
-            className="text-sm border border-slate-300 rounded-md px-2 py-1 focus:outline-none focus:ring-2 focus:ring-primary"
+            value={selectedSource || 'all'}
+            onChange={(e) => {
+              const value = e.target.value
+              onSourceChange(value === 'all' ? null : value)
+            }}
+            className="text-sm border border-slate-300 rounded-md px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-primary bg-white cursor-pointer"
           >
-            <option value="">All Sources</option>
+            <option value="all">All Sources</option>
             {sources.map((source) => (
               <option key={source} value={source}>
                 {source.charAt(0).toUpperCase() + source.slice(1)}
@@ -44,13 +47,25 @@ export default function SourceMonitor({
       </div>
 
       <div className="space-y-3 max-h-[500px] overflow-y-auto">
-        {sentiments.slice(0, 20).map((sentiment) => (
-          <SentimentCard
-            key={sentiment.id}
-            sentiment={sentiment}
-            icon={sourceIcons[sentiment.source as keyof typeof sourceIcons]}
-          />
-        ))}
+        {sentiments.length === 0 ? (
+          <div className="text-center py-12">
+            <Filter className="h-12 w-12 text-slate-300 mx-auto mb-3" />
+            <p className="text-slate-600 font-medium">No sentiments found</p>
+            <p className="text-slate-400 text-sm mt-1">
+              {selectedSource 
+                ? `No ${selectedSource} posts available yet` 
+                : 'Waiting for data...'}
+            </p>
+          </div>
+        ) : (
+          sentiments.slice(0, 20).map((sentiment) => (
+            <SentimentCard
+              key={sentiment.id}
+              sentiment={sentiment}
+              icon={sourceIcons[sentiment.source as keyof typeof sourceIcons]}
+            />
+          ))
+        )}
       </div>
     </div>
   )

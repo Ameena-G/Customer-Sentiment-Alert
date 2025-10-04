@@ -4,7 +4,6 @@ import SentimentChart from './SentimentChart'
 import AlertPanel from './AlertPanel'
 import SourceMonitor from './SourceMonitor'
 import InsightsPanel from './InsightsPanel'
-import WordCloud from './WordCloud'
 import type { SentimentRecord, Alert, Stats } from '../App'
 import { exportAsJSON, exportAsCSV, exportSummaryReport } from '../lib/exportReport'
 
@@ -142,7 +141,7 @@ export default function Dashboard({
                 onClick={onTriggerCrisis}
                 className="px-4 py-2 bg-destructive text-white rounded-lg hover:bg-destructive/90 transition-colors text-sm font-medium"
               >
-                🚨 Demo Crisis
+                🚨 Crisis
               </button>
             </div>
           </div>
@@ -185,7 +184,6 @@ export default function Dashboard({
           {/* Left Column - Charts and Feed */}
           <div className="lg:col-span-2 space-y-6">
             <SentimentChart sentiments={sentiments} />
-            <WordCloud sentiments={sentiments} />
             <SourceMonitor
               sentiments={filteredSentiments}
               selectedSource={selectedSource}

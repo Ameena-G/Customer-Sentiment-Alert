@@ -232,7 +232,7 @@ import {
   
           {/* Footer */}
           <footer className="container mx-auto px-4 py-8 text-center text-slate-600 border-t border-slate-200">
-            <p>© 2025 SentiGuard. Built for Hackathon Excellence.</p>
+            <p>© 2025 SentiGuard. Built for Excellence.</p>
           </footer>
         </div>
       </div>
