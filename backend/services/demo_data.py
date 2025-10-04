@@ -127,12 +127,17 @@ class DemoDataGenerator:
                     unique_id = str(uuid.uuid4())[:8]
                     source_id = f"{source}_{author}_{unique_id}"
                     
+                    # Distribute timestamps across last 24 hours for better analytics
+                    hours_ago = random.randint(0, 23)
+                    minutes_ago = random.randint(0, 59)
+                    created_time = datetime.utcnow() - timedelta(hours=hours_ago, minutes=minutes_ago)
+                    
                     return {
                         "source": source,
                         "source_id": source_id,
                         "text": text,
                         "author": author,
-                        "created_at": datetime.utcnow() - timedelta(minutes=random.randint(0, 60))
+                        "created_at": created_time
                     }
         
         # If we somehow exhaust all combinations, clear cache and retry

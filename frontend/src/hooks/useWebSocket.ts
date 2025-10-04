@@ -3,33 +3,35 @@ import { useEffect, useState, useCallback, useRef } from 'react'
 interface WebSocketMessage {
   type: string
   data: any
-  timestamp?: number
+  timestamp?: number // Added by client for React state change
 }
 
 export function useWebSocket(url: string) {
-  const [socket, setSocket] = useState<WebSocket | null>(null)
   const [isConnected, setIsConnected] = useState(false)
   const [lastMessage, setLastMessage] = useState<WebSocketMessage | null>(null)
-  const processedMessageIds = useRef(new Set<string>())
+  
+  // Ref for deduplication tracker
+  const processedMessageIds = useRef(new Set<string>()) 
+  
+  // Ref to store the current WebSocket instance outside of state/closure
+  const wsRef = useRef<WebSocket | null>(null)
 
   useEffect(() => {
-    let ws: WebSocket | null = null
     let reconnectTimeout: ReturnType<typeof setTimeout> | null = null
 
     const connect = () => {
       try {
-        ws = new WebSocket(url)
+        const ws = new WebSocket(url)
+        wsRef.current = ws // Store current instance
 
         ws.onopen = () => {
           console.log('WebSocket connected')
           setIsConnected(true)
-          setSocket(ws)
         }
 
         ws.onclose = () => {
           console.log('WebSocket disconnected')
           setIsConnected(false)
-          setSocket(null)
           
           // Auto-reconnect after 2 seconds
           reconnectTimeout = setTimeout(() => {
@@ -40,30 +42,37 @@ export function useWebSocket(url: string) {
 
         ws.onerror = (error) => {
           console.error('WebSocket error:', error)
+          // onclose will typically fire right after onerror, triggering reconnect
         }
 
         ws.onmessage = (event) => {
           try {
-            const message = JSON.parse(event.data)
+            const message = JSON.parse(event.data) as WebSocketMessage
             
-            // Create unique message ID
-            const messageId = `${message.type}_${message.data?.id}_${Date.now()}`
+            // --- Improved Message ID for Deduplication ---
+            // Use a unique ID from the data payload, if available
+            const uniqueId = message.data?.id || 'NO_ID_PROVIDED'; 
+            const messageId = `${message.type}_${uniqueId}`;
             
             // Check if we've already processed this message
-            if (processedMessageIds.current.has(messageId)) {
+            if (uniqueId !== 'NO_ID_PROVIDED' && processedMessageIds.current.has(messageId)) {
+              console.log(`Skipping duplicate message: ${messageId}`);
               return
             }
             
-            // Add timestamp to ensure React detects change
+            // Add timestamp to ensure React detects change even if content is the same
             message.timestamp = Date.now()
             
-            // Mark as processed
-            processedMessageIds.current.add(messageId)
+            // Mark as processed (only if a unique ID was present)
+            if (uniqueId !== 'NO_ID_PROVIDED') {
+                 processedMessageIds.current.add(messageId)
+            }
             
-            // Clean up old IDs (keep last 100)
+            // --- CORRECTED Cleanup Logic ---
             if (processedMessageIds.current.size > 100) {
-              const idsArray = Array.from(processedMessageIds.current)
-              processedMessageIds.current = new Set(idsArray.slice(-50))
+              const idsToKeep = Array.from(processedMessageIds.current).slice(-50);
+              processedMessageIds.current.clear(); 
+              idsToKeep.forEach(id => processedMessageIds.current.add(id));
             }
             
             setLastMessage(message)
@@ -78,24 +87,29 @@ export function useWebSocket(url: string) {
 
     connect()
 
+    // --- Cleanup function ---
     return () => {
       if (reconnectTimeout) {
         clearTimeout(reconnectTimeout)
       }
-      if (ws) {
-        ws.close()
+      // Use wsRef for the final closure
+      if (wsRef.current) { 
+        wsRef.current.close(1000, 'Component unmounting')
       }
     }
-  }, [url])
+  }, [url]) // Dependency array is correct
 
+  // sendMessage function using wsRef
   const sendMessage = useCallback(
     (message: any) => {
-      if (socket && isConnected && socket.readyState === WebSocket.OPEN) {
-        socket.send(JSON.stringify(message))
+      if (wsRef.current && isConnected && wsRef.current.readyState === WebSocket.OPEN) {
+        wsRef.current.send(JSON.stringify(message))
+      } else {
+        console.warn('Cannot send message: WebSocket is not open or connected.')
       }
     },
-    [socket, isConnected]
+    [isConnected]
   )
 
-  return { socket, isConnected, lastMessage, sendMessage }
+  return { socket: wsRef.current, isConnected, lastMessage, sendMessage }
 }

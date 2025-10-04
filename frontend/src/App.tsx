@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import Dashboard from './components/Dashboard'
 import LandingPage from './components/LandingPage'
 import LoginPage from './components/LoginPage'
@@ -62,6 +62,7 @@ function App() {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [voiceEnabled, setVoiceEnabled] = useState(false)
+  const lastStatsUpdateRef = useRef(0)
 
   const { isConnected, lastMessage } = useWebSocket('ws://localhost:8000/ws')
   const { announceAlert, testVoice } = useVoiceAlerts({ enabled: voiceEnabled })
@@ -134,8 +135,13 @@ function App() {
         // Add new sentiment and keep only last 100
         return [newSentiment, ...prev].slice(0, 100)
       })
-      // Refresh stats
-      api.getStats(24).then(setStats).catch(err => console.error('Failed to refresh stats:', err))
+      
+      // Throttle stats refresh - only update every 5 seconds
+      const now = Date.now()
+      if (now - lastStatsUpdateRef.current > 5000) {
+        lastStatsUpdateRef.current = now
+        api.getStats(24).then(setStats).catch(err => console.error('Failed to refresh stats:', err))
+      }
     } else if (lastMessage.type === 'alert') {
       const newAlert = lastMessage.data
       setAlerts((prev) => {

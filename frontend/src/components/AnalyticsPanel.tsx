@@ -1,6 +1,7 @@
 import { BarChart3, TrendingUp, TrendingDown, Activity, PieChart } from 'lucide-react'
 import { SentimentRecord, Stats } from '../App'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart as RePieChart, Pie, Cell } from 'recharts'
+import { useMemo } from 'react'
 
 interface AnalyticsPanelProps {
   sentiments: SentimentRecord[]
@@ -8,27 +9,46 @@ interface AnalyticsPanelProps {
 }
 
 export default function AnalyticsPanel({ sentiments, stats }: AnalyticsPanelProps) {
-  // Calculate sentiment distribution
-  const sentimentDistribution = [
+  // Calculate sentiment distribution (memoized to prevent re-renders)
+  const sentimentDistribution = useMemo(() => [
     { name: 'Positive', value: stats?.positive || 0, color: '#10b981' },
     { name: 'Neutral', value: stats?.neutral || 0, color: '#6b7280' },
     { name: 'Negative', value: stats?.negative || 0, color: '#ef4444' },
-  ]
+  ], [stats])
 
-  // Calculate source breakdown
-  const sourceData = stats?.by_source 
-    ? Object.entries(stats.by_source).map(([source, data]) => ({
-        source: source.charAt(0).toUpperCase() + source.slice(1),
-        count: data.count,
-        avgScore: data.avg_score
-      }))
-    : []
+  // Calculate source breakdown (memoized)
+  const sourceData = useMemo(() => 
+    stats?.by_source 
+      ? Object.entries(stats.by_source).map(([source, data]) => ({
+          source: source.charAt(0).toUpperCase() + source.slice(1),
+          count: data.count,
+          avgScore: data.avg_score
+        }))
+      : []
+  , [stats])
 
-  // Calculate hourly distribution (mock data for demo)
-  const hourlyData = Array.from({ length: 24 }, (_, i) => ({
-    hour: `${i}:00`,
-    count: Math.floor(Math.random() * 50) + 10
-  }))
+  // Calculate hourly distribution from actual sentiments (memoized)
+  const hourlyData = useMemo(() => {
+    const hourCounts: { [key: number]: number } = {}
+    
+    // Initialize all hours with 0
+    for (let i = 0; i < 24; i++) {
+      hourCounts[i] = 0
+    }
+    
+    // Count sentiments by hour
+    sentiments.forEach(sentiment => {
+      const date = new Date(sentiment.created_at)
+      const hour = date.getHours()
+      hourCounts[hour] = (hourCounts[hour] || 0) + 1
+    })
+    
+    // Convert to array format for chart - format like "0:00", "1:00", etc.
+    return Array.from({ length: 24 }, (_, i) => ({
+      hour: `${i}:00`,
+      count: hourCounts[i] || 0
+    }))
+  }, [sentiments])
 
   return (
     <div className="space-y-6">
@@ -112,29 +132,39 @@ export default function AnalyticsPanel({ sentiments, stats }: AnalyticsPanelProp
       {/* Hourly Activity */}
       <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-6">
         <h3 className="text-lg font-semibold text-slate-900 mb-4">24-Hour Activity Pattern</h3>
-        <ResponsiveContainer width="100%" height={250}>
-          <BarChart data={hourlyData}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="hour" />
-            <YAxis />
-            <Tooltip />
-            <Bar dataKey="count" fill="#8b5cf6" />
+        <ResponsiveContainer width="100%" height={280}>
+          <BarChart data={hourlyData} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+            <XAxis 
+              dataKey="hour" 
+              tick={{ fontSize: 12 }}
+              stroke="#64748b"
+            />
+            <YAxis 
+              tick={{ fontSize: 12 }}
+              stroke="#64748b"
+            />
+            <Tooltip 
+              contentStyle={{ 
+                backgroundColor: '#fff', 
+                border: '1px solid #e2e8f0',
+                borderRadius: '8px',
+                boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
+              }}
+              labelStyle={{ color: '#1e293b', fontWeight: 600 }}
+            />
+            <Bar 
+              dataKey="count" 
+              fill="#8b5cf6" 
+              radius={[4, 4, 0, 0]}
+              maxBarSize={50}
+            />
           </BarChart>
         </ResponsiveContainer>
       </div>
 
       {/* Top Keywords */}
-      <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-6">
-        <h3 className="text-lg font-semibold text-slate-900 mb-4">Top Mentioned Keywords</h3>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {['customer service', 'product quality', 'delivery', 'support', 'price', 'features', 'update', 'bug'].map((keyword, idx) => (
-            <div key={idx} className="bg-slate-50 rounded-lg p-4 text-center">
-              <p className="text-sm font-medium text-slate-700">{keyword}</p>
-              <p className="text-2xl font-bold text-blue-600 mt-1">{Math.floor(Math.random() * 100) + 20}</p>
-            </div>
-          ))}
-        </div>
-      </div>
+      <TopKeywords sentiments={sentiments} />
     </div>
   )
 }
@@ -163,6 +193,59 @@ function MetricCard({ title, value, icon, color }: MetricCardProps) {
         </div>
       </div>
       <p className="text-3xl font-bold text-slate-900">{value}</p>
+    </div>
+  )
+}
+
+// Top Keywords Component with memoized data
+function TopKeywords({ sentiments }: { sentiments: SentimentRecord[] }) {
+  const keywordCounts = useMemo(() => {
+    // Define keywords to search for
+    const keywordMap = {
+      'customer service': ['customer', 'service'],
+      'product quality': ['product', 'quality'],
+      'delivery': ['delivery', 'shipping'],
+      'support': ['support', 'help'],
+      'price': ['price', 'cost', 'expensive'],
+      'features': ['feature', 'functionality'],
+      'update': ['update', 'upgrade'],
+      'bug': ['bug', 'issue', 'problem', 'error']
+    }
+    
+    const counts: { [key: string]: number } = {}
+    
+    // Count occurrences
+    Object.entries(keywordMap).forEach(([displayName, keywords]) => {
+      counts[displayName] = sentiments.filter(s => {
+        const text = s.text.toLowerCase()
+        return keywords.some(kw => text.includes(kw))
+      }).length
+    })
+    
+    // Return in specific order for display
+    return [
+      { keyword: 'customer service', count: counts['customer service'] || 0 },
+      { keyword: 'product quality', count: counts['product quality'] || 0 },
+      { keyword: 'delivery', count: counts['delivery'] || 0 },
+      { keyword: 'support', count: counts['support'] || 0 },
+      { keyword: 'price', count: counts['price'] || 0 },
+      { keyword: 'features', count: counts['features'] || 0 },
+      { keyword: 'update', count: counts['update'] || 0 },
+      { keyword: 'bug', count: counts['bug'] || 0 }
+    ]
+  }, [sentiments])
+
+  return (
+    <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-6">
+      <h3 className="text-lg font-semibold text-slate-900 mb-4">Top Mentioned Keywords</h3>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+        {keywordCounts.map((item, idx) => (
+          <div key={idx} className="text-center">
+            <p className="text-sm font-medium text-slate-600 mb-2">{item.keyword}</p>
+            <p className="text-3xl font-bold text-blue-600">{item.count}</p>
+          </div>
+        ))}
+      </div>
     </div>
   )
 }
