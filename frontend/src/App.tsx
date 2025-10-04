@@ -125,19 +125,33 @@ function App() {
     if (!lastMessage) return
 
     if (lastMessage.type === 'sentiment') {
-      setSentiments((prev) => [lastMessage.data, ...prev].slice(0, 100))
+      const newSentiment = lastMessage.data
+      setSentiments((prev) => {
+        // Check if this sentiment already exists
+        const exists = prev.some(s => s.id === newSentiment.id)
+        if (exists) return prev
+        
+        // Add new sentiment and keep only last 100
+        return [newSentiment, ...prev].slice(0, 100)
+      })
       // Refresh stats
-      api.getStats(24).then(setStats)
+      api.getStats(24).then(setStats).catch(err => console.error('Failed to refresh stats:', err))
     } else if (lastMessage.type === 'alert') {
       const newAlert = lastMessage.data
-      setAlerts((prev) => [newAlert, ...prev])
+      setAlerts((prev) => {
+        // Check if this alert already exists
+        const exists = prev.some(a => a.id === newAlert.id)
+        if (exists) return prev
+        
+        return [newAlert, ...prev]
+      })
       
       // Announce alert via voice if enabled
       if (voiceEnabled) {
         announceAlert(newAlert.severity, newAlert.id)
       }
     }
-  }, [lastMessage, voiceEnabled])
+  }, [lastMessage, voiceEnabled, announceAlert])
 
   const handleResolveAlert = async (alertId: number) => {
     try {

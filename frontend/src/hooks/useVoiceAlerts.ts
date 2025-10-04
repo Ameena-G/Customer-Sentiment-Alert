@@ -17,21 +17,36 @@ export function useVoiceAlerts(options: VoiceAlertsOptions) {
     // Cancel any ongoing speech
     window.speechSynthesis.cancel()
 
-    const utterance = new SpeechSynthesisUtterance(text)
-    utterance.rate = 1.1 // Slightly faster
-    utterance.pitch = 1.0
-    utterance.volume = 0.8
+    // Small delay to ensure cancel completes
+    setTimeout(() => {
+      const utterance = new SpeechSynthesisUtterance(text)
+      utterance.rate = 0.9 // Slower for clarity
+      utterance.pitch = 1.0
+      utterance.volume = 1.0 // Full volume
+      utterance.lang = 'en-US'
 
-    // Use a more authoritative voice if available
-    const voices = window.speechSynthesis.getVoices()
-    const preferredVoice = voices.find(voice => 
-      voice.name.includes('Google') || voice.name.includes('Microsoft')
-    )
-    if (preferredVoice) {
-      utterance.voice = preferredVoice
-    }
+      // Use a more authoritative voice if available
+      const voices = window.speechSynthesis.getVoices()
+      const preferredVoice = voices.find(voice => 
+        voice.name.includes('Google') || 
+        voice.name.includes('Microsoft') ||
+        voice.lang === 'en-US'
+      )
+      if (preferredVoice) {
+        utterance.voice = preferredVoice
+      }
 
-    window.speechSynthesis.speak(utterance)
+      // Handle speech interruption
+      utterance.onend = () => {
+        // Speech completed successfully
+      }
+
+      utterance.onerror = (event) => {
+        console.error('Speech synthesis error:', event)
+      }
+
+      window.speechSynthesis.speak(utterance)
+    }, 100)
   }
 
   const announceAlert = (severity: string, alertId: number) => {
