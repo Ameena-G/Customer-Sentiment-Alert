@@ -101,14 +101,14 @@ npm run dev
 
 ### 📂 Folder Structure
 
-sentiguard/
-├── backend/
-│   ├── app.py                 # Main FastAPI application
-│   ├── models/
-│   │   └── database.py        # Database models
-│   ├── services/
-│   │   ├── nlp_service.py     # NLP/AI service
-│   │   ├── alert_service.py   # Alert detection
+ sentiguard/
+ ├── backend/
+ │   ├── app.py                 # Main FastAPI application
+ │   ├── models/
+ │   │   └── database.py        # Database models
+ │   ├── services/
+ │   │   ├── nlp_service.py     # NLP/AI service
+ │   │   ├── alert_service.py   # Alert detection
 │   │   └── demo_data.py       # Demo data generator
 │   ├── requirements.txt       # Python dependencies
 │   └── .env.example          # Environment template
