@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
 import Dashboard from './components/Dashboard'
 import LandingPage from './components/LandingPage'
+import LoginPage from './components/LoginPage'
+import RegisterPage from './components/RegisterPage'
 import Sidebar from './components/Sidebar'
 import SearchPanel from './components/SearchPanel'
 import AnalyticsPanel from './components/AnalyticsPanel'
@@ -51,8 +53,9 @@ export interface Stats {
 }
 
 function App() {
-  const [showLanding, setShowLanding] = useState(true)
+  const [currentView, setCurrentView] = useState<'landing' | 'login' | 'register' | 'app'>('landing')
   const [activeTab, setActiveTab] = useState('dashboard')
+  const [userData, setUserData] = useState<{ name: string; email: string; role: string } | null>(null)
   const [sentiments, setSentiments] = useState<SentimentRecord[]>([])
   const [alerts, setAlerts] = useState<Alert[]>([])
   const [stats, setStats] = useState<Stats | null>(null)
@@ -73,7 +76,23 @@ function App() {
   }
 
   const handleEnterDashboard = () => {
-    setShowLanding(false)
+    setCurrentView('login')
+  }
+
+  const handleLogin = (user: { name: string; email: string; role: string }) => {
+    setUserData(user)
+    setCurrentView('app')
+  }
+
+  const handleRegister = (user: { name: string; email: string; role: string }) => {
+    setUserData(user)
+    setCurrentView('app')
+  }
+
+  const handleLogout = () => {
+    setUserData(null)
+    setCurrentView('landing')
+    setActiveTab('dashboard')
   }
 
   // Load initial data
@@ -142,8 +161,18 @@ function App() {
   }
 
   // Show landing page first
-  if (showLanding) {
+  if (currentView === 'landing') {
     return <LandingPage onEnterDashboard={handleEnterDashboard} />
+  }
+
+  // Show login page
+  if (currentView === 'login') {
+    return <LoginPage onLogin={handleLogin} onSwitchToRegister={() => setCurrentView('register')} />
+  }
+
+  // Show register page
+  if (currentView === 'register') {
+    return <RegisterPage onRegister={handleRegister} onSwitchToLogin={() => setCurrentView('login')} />
   }
 
   if (isLoading) {
@@ -180,7 +209,13 @@ function App() {
   return (
     <div className="flex h-screen overflow-hidden">
       {/* Sidebar */}
-      <Sidebar activeTab={activeTab} onTabChange={setActiveTab} />
+      <Sidebar 
+        activeTab={activeTab} 
+        onTabChange={setActiveTab}
+        onLogout={handleLogout}
+        userName={userData?.name}
+        userRole={userData?.role}
+      />
       
       {/* Main Content */}
       <div className="flex-1 overflow-auto">

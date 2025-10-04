@@ -7,15 +7,19 @@ import {
   Users, 
   Settings,
   Bell,
-  TrendingUp
+  TrendingUp,
+  LogOut
 } from 'lucide-react'
 
 interface SidebarProps {
   activeTab: string
   onTabChange: (tab: string) => void
+  onLogout: () => void
+  userName?: string
+  userRole?: string
 }
 
-export default function Sidebar({ activeTab, onTabChange }: SidebarProps) {
+export default function Sidebar({ activeTab, onTabChange, onLogout, userName = 'Demo User', userRole = 'Admin' }: SidebarProps) {
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'search', label: 'Search', icon: Search },
@@ -65,13 +69,26 @@ export default function Sidebar({ activeTab, onTabChange }: SidebarProps) {
       </nav>
 
       {/* Footer */}
-      <div className="p-4 border-t border-slate-200">
-        <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-4">
-          <p className="text-xs font-semibold text-slate-700 mb-1">Pro Tip</p>
-          <p className="text-xs text-slate-600">
-            Enable voice alerts for instant crisis notifications
-          </p>
+      <div className="p-4 border-t border-slate-200 space-y-3">
+        {/* User Info */}
+        <div className="flex items-center space-x-3 px-3 py-2 bg-slate-50 rounded-lg">
+          <div className="h-10 w-10 rounded-full bg-gradient-to-r from-blue-600 to-purple-600 flex items-center justify-center text-white font-semibold">
+            {userName.split(' ').map(n => n[0]).join('')}
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-slate-900 truncate">{userName}</p>
+            <p className="text-xs text-slate-500">{userRole}</p>
+          </div>
         </div>
+
+        {/* Logout Button */}
+        <button
+          onClick={onLogout}
+          className="w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-red-600 hover:bg-red-50 transition-all font-medium"
+        >
+          <LogOut className="h-5 w-5" />
+          <span className="text-sm">Logout</span>
+        </button>
       </div>
     </aside>
   )
