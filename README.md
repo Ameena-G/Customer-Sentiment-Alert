@@ -1,4 +1,4 @@
-# 🛡️ SentiGuard - Real-Time Customer Sentiment Monitoring Platform
+# SentiGuard - Real-Time Customer Sentiment Monitoring Platform
 
 > **AI-Powered Sentiment Analysis with Crisis Detection & Voice Alerts**
 
@@ -6,7 +6,7 @@
 
 ---
 
-## 🌟 Key Features
+## Key Features
 
 ### 🎯 Core Capabilities
 - **Real-Time Sentiment Analysis** - Instant AI-powered classification using DistilBERT
@@ -64,6 +64,8 @@ pip install -r requirements.txt
 # Run the backend server
 python app.py
 
+```
+
 ### 🔧 Frontend Setup
 
 ```bash
@@ -75,28 +77,29 @@ npm install
 
 # Start development server
 npm run dev
-
+```
 ### Tech Stack
 
 ## Frontend:
 
-Framework: React 18 + TypeScript
-Styling: TailwindCSS + shadcn/ui
-State Management: React Hooks
-Charts: Recharts
-Icons: Lucide React
-Real-time: Socket.io Client
+**Framework**: React 18 + TypeScript
+**Styling**: TailwindCSS + shadcn/ui
+**State Management**: React Hooks
+**Charts**: Recharts
+**Icons**: Lucide React
+**Real-time**: Socket.io Client
+
 ## Backend:
 
-Framework: FastAPI (Python)
-NLP Models:
+**Framework**: FastAPI (Python)
+**NLP Models**:
        DistilBERT (Sentiment Analysis)
        Emotion Detection Model
-Database: SQLite 
-Real-time: Socket.io Server
-API: RESTful + WebSocket
+**Database**: SQLite 
+**Real-time**: Socket.io Server
+**API**: RESTful + WebSocket
 
-### Folder Structure
+### 📂 Folder Structure
 
 sentiguard/
 ├── backend/
