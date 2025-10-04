@@ -101,41 +101,43 @@ npm run dev
 
 ### 📂 Folder Structure
 
- sentiguard/
- ├── backend/
- │   ├── app.py                 # Main FastAPI application
- │   ├── models/
- │   │   └── database.py        # Database models
- │   ├── services/
- │   │   ├── nlp_service.py     # NLP/AI service
- │   │   ├── alert_service.py   # Alert detection
- │   │   └── demo_data.py       # Demo data generator
- │   ├── requirements.txt       # Python dependencies
- │   └── .env.example          # Environment template
- │
- ├── frontend/
- │   ├── src/
- │   │   ├── components/
- │   │   │   ├── LandingPage.tsx
- │   │   │   ├── LoginPage.tsx
- │   │   │   ├── RegisterPage.tsx
- │   │   │   ├── Dashboard.tsx
- │   │   │   ├── Sidebar.tsx
- │   │   │   ├── SearchPanel.tsx
- │   │   │   ├── AnalyticsPanel.tsx
- │   │   │   ├── ReportsPanel.tsx
- │   │   │   ├── QueriesPanel.tsx
- │   │   │   ├── TrendsPanel.tsx
- │   │   │   ├── AlertSettingsPanel.tsx
- │   │   │   ├── UsersPanel.tsx
- │   │   │   └── SettingsPanel.tsx
- │   │   ├── hooks/
- │   │   │   ├── useWebSocket.ts
- │   │   │   └── useVoiceAlerts.ts
- │   │   ├── lib/
- │   │   │   └── api.ts
- │   │   └── App.tsx
- │   ├── package.json
- │   └── tailwind.config.js
- │
- └── README.md
+sentiguard/
+├── backend/
+│   ├── app.py                 # Main FastAPI application
+│   ├── models/
+│   │   └── database.py        # Database models
+│   ├── services/
+│   │   ├── nlp_service.py     # NLP/AI service
+│   │   ├── alert_service.py   # Alert detection
+│   │   └── demo_data.py       # Demo data generator
+│   ├── requirements.txt       # Python dependencies
+│   └── .env.example          # Environment template
+│
+├── frontend/
+│   ├── src/
+│   │   ├── components/
+│   │   │   ├── LandingPage.tsx
+│   │   │   ├── LoginPage.tsx
+│   │   │   ├── RegisterPage.tsx
+│   │   │   ├── Dashboard.tsx
+│   │   │   ├── Sidebar.tsx
+│   │   │   ├── SearchPanel.tsx
+│   │   │   ├── AnalyticsPanel.tsx
+│   │   │   ├── ReportsPanel.tsx
+│   │   │   ├── QueriesPanel.tsx
+│   │   │   ├── TrendsPanel.tsx
+│   │   │   ├── AlertSettingsPanel.tsx
+│   │   │   ├── UsersPanel.tsx
+│   │   │   └── SettingsPanel.tsx
+│   │   ├── hooks/
+│   │   │   ├── useWebSocket.ts
+│   │   │   └── useVoiceAlerts.ts
+│   │   ├── lib/
+│   │   │   └── api.ts
+│   │   └── App.tsx
+│   ├── package.json
+│   └── tailwind.config.js
+│
+└── README.md
+
+
